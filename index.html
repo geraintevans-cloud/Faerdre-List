@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#f0faf2">
+    <title>Faerdre List</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #f0faf2;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f2faf5;
+            --bg-input: #e4f2e8;
+            --accent: #1a8a4a;
+            --accent-bright: #15793f;
+            --accent-glow: rgba(26, 138, 74, 0.18);
+            --text-primary: #1a2e1e;
+            --text-secondary: #4a6050;
+            --text-tertiary: #7d9485;
+            --success: #0d9e42;
+            --warning: #c87400;
+            --danger: #dc2626;
+            --border: #d4e8da;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow-sm: 0 1px 4px rgba(30, 90, 50, 0.06);
+            --shadow: 0 4px 20px rgba(30, 90, 50, 0.07);
+            --shadow-lg: 0 8px 32px rgba(30, 90, 50, 0.11);
+            --transition: 0.2s ease;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            padding-top: max(14px, env(safe-area-inset-top));
+            background: linear-gradient(135deg, #ffffff 0%, #eaf7ee 100%);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #15793f, #1a8a4a, #2aad5a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-tertiary);
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-btn:active { transform: scale(0.92); }
+
+        /* ── Content Area ── */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 80px;
+        }
+
+        .content::-webkit-scrollbar { display: none; }
+
+        /* ── Search Bar ── */
+        .search-container {
+            padding: 16px 20px 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg-primary);
+        }
+
+        .search-box { position: relative; display: flex; align-items: center; }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            color: var(--text-tertiary);
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 50px;
+            padding: 0 46px 0 44px;
+            border-radius: 25px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow), var(--shadow);
+        }
+
+        .search-input::placeholder { color: var(--text-tertiary); }
+
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-input);
+            color: var(--text-tertiary);
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .search-clear.visible { display: flex; }
+        .search-clear:active { transform: scale(0.9); }
+
+        /* ── Cards ── */
+        .results { padding: 6px 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+            animation: fadeUp 0.35s ease forwards;
+            opacity: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .card-inner { padding: 16px 16px 16px 20px; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:active { transform: scale(0.985); }
+
+        .card-top { display: flex; gap: 14px; }
+
+        .card-poster {
+            width: 88px;
+            min-width: 88px;
+            height: 132px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--bg-primary);
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .card-poster .no-poster {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-tertiary); font-size: 28px;
+        }
+
+        .card-info {
+            flex: 1; min-width: 0;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 6px; font-size: 12.5px; color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-flex; align-items: center;
+            padding: 3px 9px; border-radius: 20px;
+            font-size: 10.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.6px;
+        }
+
+        .badge-tv { background: rgba(26, 138, 74, 0.1); color: #15793f; }
+        .badge-film { background: rgba(200, 116, 0, 0.1); color: var(--warning); }
+        .badge-returning { background: rgba(13, 158, 66, 0.1); color: var(--success); }
+        .badge-ended { background: rgba(107, 114, 128, 0.08); color: var(--text-tertiary); }
+
+        .card-rating {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 13px; color: #d4880a; font-weight: 700;
+        }
+        .card-rating .star { font-size: 13px; }
+
+        /* ── Season Callout ── */
+        .season-line {
+            font-size: 12.5px; color: var(--text-secondary); margin-top: 2px;
+            display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+        }
+
+        .upcoming-callout {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 6px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .upcoming-callout.next {
+            background: rgba(13, 158, 66, 0.08);
+            border: 1px solid rgba(13, 158, 66, 0.18);
+            color: var(--success);
+        }
+
+        .upcoming-callout.latest {
+            background: rgba(26, 138, 74, 0.06);
+            border: 1px solid rgba(26, 138, 74, 0.14);
+            color: #15793f;
+        }
+
+        .upcoming-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .upcoming-dot.green { background: var(--success); }
+        .upcoming-dot.blue { background: var(--accent); }
+
+        .card-overview {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        /* ── Providers ── */
+        .card-providers {
+            display: flex; align-items: center; flex-wrap: wrap;
+            gap: 8px; margin-top: 14px; padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .provider-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 10px 4px 4px;
+            background: var(--bg-primary);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .provider-chip img {
+            width: 26px; height: 26px;
+            border-radius: 6px; display: block;
+        }
+
+        .provider-chip span {
+            font-size: 11.5px; font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .provider-logo {
+            width: 34px; height: 34px;
+            border-radius: 8px; overflow: hidden;
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .provider-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .no-providers {
+            font-size: 12.5px;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        /* ── Action Buttons ── */
+        .card-actions { margin-top: 14px; display: flex; gap: 8px; }
+
+        .btn {
+            flex: 1; height: 44px; border-radius: 12px;
+            border: none; font-family: inherit;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            gap: 6px; transition: all var(--transition);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #15793f, #1fa050);
+            color: white;
+            box-shadow: 0 4px 14px rgba(21, 121, 63, 0.3);
+        }
+
+        .btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(21, 121, 63, 0.2); }
+
+        .btn-in-list {
+            background: rgba(13, 158, 66, 0.08);
+            color: var(--success);
+            border: 1.5px solid rgba(13, 158, 66, 0.2);
+        }
+
+        .btn-in-list:active { transform: scale(0.97); }
+
+        /* ── Watchlist ── */
+        .watchlist-group { margin-bottom: 6px; }
+
+        .watchlist-group-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px 8px;
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-tertiary);
+        }
+
+        .watchlist-group-count {
+            background: var(--bg-input);
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .wl-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            margin: 0 20px 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            animation: fadeUp 0.3s ease forwards;
+            opacity: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wl-accent {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+        }
+
+        .wl-inner { padding: 14px 14px 14px 18px; }
+
+        .wl-top { display: flex; gap: 12px; }
+
+        .wl-poster {
+            width: 60px; min-width: 60px; height: 90px;
+            border-radius: 8px; overflow: hidden;
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .wl-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .wl-poster .no-poster {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-tertiary); font-size: 22px;
+        }
+
+        .wl-info { flex: 1; min-width: 0; }
+
+        .wl-title {
+            font-size: 17px; font-weight: 700;
+            line-height: 1.25; letter-spacing: -0.2px;
+            margin-bottom: 4px;
+        }
+
+        .wl-sub {
+            font-size: 12px; color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+        }
+
+        .wl-desc {
+            font-size: 12.5px; color: var(--text-tertiary);
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .wl-providers {
+            display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+        }
+
+        .wl-providers .provider-chip { padding: 3px 8px 3px 3px; }
+        .wl-providers .provider-chip img { width: 22px; height: 22px; border-radius: 5px; }
+        .wl-providers .provider-chip span { font-size: 10.5px; }
+
+        .wl-actions {
+            display: flex; flex-direction: column;
+            align-items: flex-end; gap: 8px;
+            margin-left: 8px; flex-shrink: 0;
+        }
+
+        .delete-btn {
+            width: 30px; height: 30px; border-radius: 8px;
+            border: 1px solid rgba(220, 38, 38, 0.12);
+            background: rgba(220, 38, 38, 0.04);
+            color: #e05555; font-size: 14px;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .delete-btn:active { background: rgba(220, 38, 38, 0.12); transform: scale(0.9); }
+
+        .status-btn {
+            height: 28px; padding: 0 11px; border-radius: 14px;
+            border: 1.5px solid var(--border);
+            background: var(--bg-secondary); color: var(--text-secondary);
+            font-family: inherit; font-size: 11px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center;
+            gap: 4px; white-space: nowrap;
+            transition: all var(--transition);
+        }
+
+        .status-btn:active { transform: scale(0.93); }
+
+        .status-btn.want { border-color: rgba(26, 138, 74, 0.3); color: #15793f; background: rgba(26, 138, 74, 0.05); }
+        .status-btn.watching { border-color: rgba(200, 116, 0, 0.3); color: var(--warning); background: rgba(200, 116, 0, 0.05); }
+        .status-btn.watched { border-color: rgba(13, 158, 66, 0.3); color: var(--success); background: rgba(13, 158, 66, 0.05); }
+
+        /* ── Bottom Navigation ── */
+        .bottom-nav {
+            position: fixed; bottom: 0;
+            left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px;
+            display: flex;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border);
+            padding-bottom: var(--safe-bottom);
+            z-index: 100;
+        }
+
+        .nav-tab {
+            flex: 1; height: 60px; border: none; background: none;
+            color: var(--text-tertiary); font-family: inherit;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 3px; transition: all var(--transition);
+            position: relative;
+        }
+
+        .nav-tab .nav-icon { font-size: 22px; transition: all var(--transition); }
+
+        .nav-tab.active { color: var(--accent-bright); }
+        .nav-tab.active .nav-icon { transform: scale(1.15); }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute; top: 0; left: 30%; right: 30%;
+            height: 3px; border-radius: 0 0 3px 3px;
+            background: linear-gradient(90deg, var(--accent), #2aad5a);
+        }
+
+        .nav-badge {
+            position: absolute; top: 5px; right: calc(50% - 24px);
+            min-width: 18px; height: 18px; padding: 0 5px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #15793f, #1a8a4a);
+            color: white; font-size: 10px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; top: 20px; left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 12px 24px; border-radius: 14px;
+            background: var(--text-primary);
+            color: white; font-size: 14px; font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+
+        .toast.visible { transform: translateX(-50%) translateY(0); }
+
+        /* ── Setup Screen ── */
+        .setup-screen {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 32px 24px; text-align: center;
+        }
+
+        .setup-icon { font-size: 60px; margin-bottom: 20px; }
+
+        .setup-title {
+            font-size: 26px; font-weight: 800;
+            margin-bottom: 10px; letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #15793f, #1a8a4a, #2aad5a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .setup-desc {
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.6; margin-bottom: 28px; max-width: 320px;
+        }
+
+        .setup-desc a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+        .setup-input {
+            width: 100%; max-width: 340px; height: 50px;
+            padding: 0 16px; border-radius: 14px;
+            border: 2px solid var(--border); background: var(--bg-secondary);
+            color: var(--text-primary); font-family: inherit; font-size: 14px;
+            outline: none; transition: all var(--transition); margin-bottom: 16px;
+        }
+
+        .setup-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .setup-btn {
+            width: 100%; max-width: 340px; height: 50px;
+            border-radius: 14px; border: none;
+            background: linear-gradient(135deg, #15793f, #1fa050);
+            color: white; font-family: inherit;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: 0 4px 14px rgba(21, 121, 63, 0.3);
+        }
+
+        .setup-btn:active { transform: scale(0.97); }
+        .setup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .setup-error { margin-top: 12px; font-size: 13px; color: var(--danger); }
+
+        /* ── Empty States ── */
+        .empty-state {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 60px 32px; text-align: center;
+        }
+
+        .empty-state .empty-icon { font-size: 52px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+        .empty-state .empty-desc { font-size: 13.5px; color: var(--text-tertiary); max-width: 260px; line-height: 1.5; }
+
+        /* ── Loading ── */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
+
+        .spinner {
+            width: 34px; height: 34px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-input) 25%, #e2e2f0 50%, var(--bg-input) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(26, 26, 46, 0.25);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 200; display: flex;
+            align-items: center; justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 24px;
+            max-width: 300px; width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            animation: scaleIn 0.25s ease;
+        }
+
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .modal-desc { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px; }
+
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-buttons .btn { height: 42px; font-size: 14px; border-radius: 12px; }
+
+        .btn-cancel {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: rgba(220, 38, 38, 0.08);
+            color: var(--danger);
+            border: 1.5px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .btn-danger:active { background: rgba(220, 38, 38, 0.15); transform: scale(0.97); }
+
+        /* ── TMDB Attribution ── */
+        .tmdb-attr {
+            padding: 16px 20px 24px; text-align: center;
+            font-size: 11px; color: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <div id="toast" class="toast"></div>
+    <div id="modal-root"></div>
+
+    <script>
+    // ─── Provider Brand Colours (tuned for light background readability) ───
+    const PROVIDER_COLORS = {
+        8:    '#d11318',   // Netflix
+        9:    '#007eb5',   // Amazon Prime Video
+        119:  '#c47e00',   // Amazon Video
+        337:  '#1338be',   // Disney+
+        2:    '#555555',   // Apple TV
+        350:  '#555555',   // Apple TV+
+        38:   '#d6357a',   // BBC iPlayer
+        39:   '#0e8c40',   // NOW
+        103:  '#d94e00',   // All 4
+        41:   '#0095c8',   // ITVX
+        380:  '#c7006b',   // BritBox
+        531:  '#0054d9',   // Paramount+
+        283:  '#d96218',   // Crunchyroll
+        11:   '#0a1280',   // MUBI
+        1899: '#b80000',   // Max
+        192:  '#cc0000',   // YouTube
+        3:    '#008060',   // Google Play
+    };
+
+    function getProviderColor(providers) {
+        if (!providers || providers.length === 0) return null;
+        return PROVIDER_COLORS[providers[0].id] || '#15793f';
+    }
+
+    function truncateToSentences(text, count = 2) {
+        if (!text) return '';
+        const sentences = text.match(/[^.!?]+[.!?]+/g);
+        if (!sentences) return text.length > 160 ? text.slice(0, 157) + '...' : text;
+        const result = sentences.slice(0, count).join('').trim();
+        return result.length > 200 ? result.slice(0, 197) + '...' : result;
+    }
+
+    // ─── App State ─────────────────────────────────────────
+    const APP = {
+        apiKey: localStorage.getItem('sf_api_key') || '',
+        tab: 'search',
+        query: '',
+        results: [],
+        loading: false,
+        detailsCache: {},
+        watchlist: JSON.parse(localStorage.getItem('sf_watchlist') || '[]'),
+    };
+
+    const TMDB_BASE = 'https://api.themoviedb.org/3';
+    const IMG_BASE = 'https://image.tmdb.org/t/p';
+    let searchTimer = null;
+
+    // ─── TMDB API ──────────────────────────────────────────
+    function tmdbFetch(path, params = {}) {
+        const isToken = APP.apiKey.length > 60;
+        const url = new URL(`${TMDB_BASE}${path}`);
+        if (!isToken) url.searchParams.set('api_key', APP.apiKey);
+        Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+        const headers = {};
+        if (isToken) headers['Authorization'] = `Bearer ${APP.apiKey}`;
+        return fetch(url, { headers }).then(r => {
+            if (!r.ok) throw new Error(`TMDB Error ${r.status}`);
+            return r.json();
+        });
+    }
+
+    async function searchContent(query) {
+        if (!query.trim()) { APP.results = []; render(); return; }
+        APP.loading = true;
+        APP.results = [];
+        render();
+
+        try {
+            const data = await tmdbFetch('/search/multi', {
+                query: query.trim(),
+                language: 'en-GB',
+                region: 'GB',
+                page: '1',
+                include_adult: 'false'
+            });
+
+            APP.results = data.results
+                .filter(r => r.media_type === 'tv' || r.media_type === 'movie')
+                .slice(0, 15)
+                .map(r => ({
+                    id: r.id,
+                    type: r.media_type,
+                    title: r.media_type === 'tv' ? r.name : r.title,
+                    year: (r.first_air_date || r.release_date || '').slice(0, 4),
+                    poster: r.poster_path,
+                    overview: r.overview || '',
+                    rating: r.vote_average ? r.vote_average.toFixed(1) : null,
+                    details: null,
+                }));
+
+            APP.loading = false;
+            render();
+
+            // Progressively fetch details (providers + season info)
+            APP.results.forEach((item, idx) => {
+                fetchDetails(item.id, item.type).then(details => {
+                    if (APP.results[idx]) {
+                        APP.results[idx].details = details;
+                        refreshCard(item.id, idx);
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Search error:', err);
+            APP.loading = false;
+            APP.results = [];
+            render();
+            showToast('Search failed. Check your API key.');
+        }
+    }
+
+    async function fetchDetails(id, type) {
+        const cacheKey = `${type}-${id}`;
+        if (APP.detailsCache[cacheKey]) return APP.detailsCache[cacheKey];
+
+        try {
+            const data = await tmdbFetch(`/${type}/${id}`, {
+                language: 'en-GB',
+                append_to_response: 'watch/providers'
+            });
+
+            const gbProviders = data['watch/providers']?.results?.GB || {};
+            const providers = [
+                ...(gbProviders.flatrate || []),
+                ...(gbProviders.free || []),
+                ...(gbProviders.ads || [])
+            ];
+
+            const seen = new Set();
+            const uniqueProviders = providers.filter(p => {
+                if (seen.has(p.provider_id)) return false;
+                seen.add(p.provider_id);
+                return true;
+            }).map(p => ({
+                id: p.provider_id,
+                name: p.provider_name,
+                logo: p.logo_path,
+            }));
+
+            const details = {
+                providers: uniqueProviders,
+                rentBuy: [...(gbProviders.rent || []), ...(gbProviders.buy || [])].length > 0,
+            };
+
+            if (type === 'tv') {
+                details.seasons = data.number_of_seasons;
+                details.status = data.status;
+                details.lastEpisode = data.last_episode_to_air;
+                details.nextEpisode = data.next_episode_to_air;
+            }
+
+            APP.detailsCache[cacheKey] = details;
+            return details;
+        } catch (err) {
+            console.error('Details error:', err);
+            return { providers: [], rentBuy: false };
+        }
+    }
+
+    function refreshCard(id, idx) {
+        const cardEl = document.getElementById('card-' + id);
+        if (!cardEl) return;
+        const item = APP.results.find(r => r.id === id);
+        if (!item) return;
+        const temp = document.createElement('div');
+        temp.innerHTML = renderResultCard(item, idx);
+        const newCard = temp.firstElementChild;
+        newCard.style.opacity = '1';
+        newCard.style.animation = 'none';
+        cardEl.replaceWith(newCard);
+    }
+
+    // ─── Watchlist ─────────────────────────────────────────
+    function saveWatchlist() {
+        localStorage.setItem('sf_watchlist', JSON.stringify(APP.watchlist));
+    }
+
+    function isInWatchlist(id) {
+        return APP.watchlist.some(w => w.id === id);
+    }
+
+    function addToWatchlist(item) {
+        if (isInWatchlist(item.id)) return;
+        APP.watchlist.unshift({
+            id: item.id,
+            type: item.type,
+            title: item.title,
+            year: item.year,
+            poster: item.poster,
+            overview: item.overview || '',
+            providers: item.details?.providers || [],
+            seasonInfo: item.type === 'tv' ? {
+                seasons: item.details?.seasons,
+                status: item.details?.status,
+                nextEpisode: item.details?.nextEpisode,
+                lastEpisode: item.details?.lastEpisode,
+            } : null,
+            status: 'want_to_watch',
+            addedAt: new Date().toISOString(),
+        });
+        saveWatchlist();
+        render();
+        showToast('Added to watchlist');
+    }
+
+    function removeFromWatchlist(id) {
+        APP.watchlist = APP.watchlist.filter(w => w.id !== id);
+        saveWatchlist();
+        document.getElementById('modal-root').innerHTML = '';
+        render();
+        showToast('Removed from watchlist');
+    }
+
+    function cycleStatus(id) {
+        const item = APP.watchlist.find(w => w.id === id);
+        if (!item) return;
+        const order = ['want_to_watch', 'watching', 'watched'];
+        const idx = order.indexOf(item.status);
+        item.status = order[(idx + 1) % order.length];
+        saveWatchlist();
+        render();
+    }
+
+    // ─── Toast ─────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('visible'), 2200);
+    }
+
+    // ─── Confirm Modal ─────────────────────────────────────
+    function showDeleteConfirm(id, title) {
+        const root = document.getElementById('modal-root');
+        root.innerHTML = `
+            <div class="modal-overlay" onclick="dismissModal(event)">
+                <div class="modal-box">
+                    <div class="modal-title">Remove from watchlist?</div>
+                    <div class="modal-desc">${escHtml(title)}</div>
+                    <div class="modal-buttons">
+                        <button class="btn btn-cancel" onclick="dismissModal()">Cancel</button>
+                        <button class="btn btn-danger" onclick="removeFromWatchlist(${id})">Remove</button>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function dismissModal(e) {
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('modal-root').innerHTML = '';
+    }
+
+    // ─── Render ────────────────────────────────────────────
+    function render() {
+        const app = document.getElementById('app');
+
+        if (!APP.apiKey) { app.innerHTML = renderSetup(); return; }
+
+        const wlCount = APP.watchlist.length;
+        app.innerHTML = `
+            <div class="header">
+                <h1>Faerdre List</h1>
+                <button class="header-btn" onclick="showSettings()" title="Settings">&#9881;</button>
+            </div>
+            <div class="content" id="content">
+                ${APP.tab === 'search' ? renderSearch() : renderWatchlist()}
+            </div>
+            <nav class="bottom-nav">
+                <button class="nav-tab ${APP.tab === 'search' ? 'active' : ''}" onclick="switchTab('search')">
+                    <span class="nav-icon">&#128269;</span>Search
+                </button>
+                <button class="nav-tab ${APP.tab === 'watchlist' ? 'active' : ''}" onclick="switchTab('watchlist')">
+                    <span class="nav-icon">&#9733;</span>
+                    ${wlCount > 0 ? `<span class="nav-badge">${wlCount}</span>` : ''}
+                    Watchlist
+                </button>
+            </nav>`;
+
+        if (APP.tab === 'search') {
+            const input = document.getElementById('search-input');
+            if (input) input.value = APP.query;
+        }
+    }
+
+    function renderSetup() {
+        return `
+            <div class="setup-screen">
+                <div class="setup-icon">&#127916;</div>
+                <div class="setup-title">Faerdre List</div>
+                <div class="setup-desc">
+                    Find where to stream TV shows and films across all UK platforms.
+                    <br><br>
+                    You'll need a free TMDB API key. Get one at
+                    <a href="https://www.themoviedb.org/settings/api" target="_blank">themoviedb.org</a>
+                    <br><br>
+                    Paste either your <strong>API Key</strong> or <strong>API Read Access Token</strong> below.
+                </div>
+                <input class="setup-input" id="api-key-input" type="text" placeholder="Paste your TMDB API key..." autocomplete="off">
+                <button class="setup-btn" onclick="saveApiKey()">Get Started</button>
+                <div class="setup-error" id="setup-error"></div>
+            </div>`;
+    }
+
+    async function saveApiKey() {
+        const input = document.getElementById('api-key-input');
+        const key = input.value.trim();
+        if (!key) return;
+        const errEl = document.getElementById('setup-error');
+        errEl.textContent = 'Verifying...';
+        try {
+            APP.apiKey = key;
+            await tmdbFetch('/configuration', {});
+            localStorage.setItem('sf_api_key', key);
+            errEl.textContent = '';
+            render();
+        } catch (e) {
+            APP.apiKey = '';
+            errEl.textContent = 'Invalid API key. Please check and try again.';
+        }
+    }
+
+    function showSettings() {
+        const root = document.getElementById('modal-root');
+        root.innerHTML = `
+            <div class="modal-overlay" onclick="dismissModal(event)">
+                <div class="modal-box">
+                    <div class="modal-title">Settings</div>
+                    <div class="modal-desc">Change your TMDB API key</div>
+                    <input class="setup-input" id="settings-key" type="text" value="${escHtml(APP.apiKey)}"
+                        style="max-width:100%;margin-bottom:14px" autocomplete="off">
+                    <div class="modal-buttons">
+                        <button class="btn btn-cancel" onclick="dismissModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="updateApiKey()">Save</button>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function updateApiKey() {
+        const input = document.getElementById('settings-key');
+        const key = input.value.trim();
+        if (key) {
+            APP.apiKey = key;
+            localStorage.setItem('sf_api_key', key);
+            APP.detailsCache = {};
+        }
+        dismissModal();
+        showToast('API key updated');
+    }
+
+    // ─── Search Tab ────────────────────────────────────────
+    function renderSearch() {
+        let html = `
+            <div class="search-container">
+                <div class="search-box">
+                    <span class="search-icon">&#128269;</span>
+                    <input class="search-input" id="search-input" type="text"
+                        placeholder="Search TV shows &amp; films..."
+                        oninput="handleSearchInput(this.value)"
+                        autocomplete="off" autocorrect="off" spellcheck="false">
+                    <button class="search-clear ${APP.query ? 'visible' : ''}" onclick="clearSearch()">&#10005;</button>
+                </div>
+            </div>
+            <div class="results" id="results">`;
+
+        if (APP.loading) {
+            html += '<div class="loading"><div class="spinner"></div></div>';
+        } else if (APP.results.length > 0) {
+            APP.results.forEach((item, idx) => { html += renderResultCard(item, idx); });
+            html += '<div class="tmdb-attr">Data provided by TMDB</div>';
+        } else if (APP.query && !APP.loading) {
+            html += `<div class="empty-state">
+                <div class="empty-icon">&#128533;</div>
+                <div class="empty-title">No results found</div>
+                <div class="empty-desc">Try a different search term</div>
+            </div>`;
+        } else {
+            html += `<div class="empty-state">
+                <div class="empty-icon">&#127916;</div>
+                <div class="empty-title">Find something to watch</div>
+                <div class="empty-desc">Search for TV shows and films to see where to stream them in the UK</div>
+            </div>`;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function renderResultCard(item, idx) {
+        const inList = isInWatchlist(item.id);
+        const posterSrc = item.poster ? `${IMG_BASE}/w200${item.poster}` : '';
+        const d = item.details;
+        const delay = idx * 0.05;
+        const accentColor = d ? getProviderColor(d.providers) : null;
+
+        // Season / upcoming info
+        let seasonHtml = '';
+        if (item.type === 'tv' && d) {
+            let parts = [];
+            if (d.seasons) parts.push(`${d.seasons} Season${d.seasons !== 1 ? 's' : ''}`);
+            if (d.status) {
+                const map = { 'Returning Series': 'Returning', 'Ended': 'Ended', 'Canceled': 'Cancelled', 'In Production': 'In Production', 'Planned': 'Planned' };
+                const label = map[d.status] || d.status;
+                const cls = d.status === 'Returning Series' ? 'badge-returning' : 'badge-ended';
+                parts.push(`<span class="badge ${cls}">${label}</span>`);
+            }
+            if (parts.length) seasonHtml += `<div class="season-line">${parts.join(' &middot; ')}</div>`;
+
+            if (d.nextEpisode) {
+                const dt = formatDate(d.nextEpisode.air_date);
+                seasonHtml += `<div class="upcoming-callout next">
+                    <span class="upcoming-dot green"></span>
+                    Next: S${d.nextEpisode.season_number}E${d.nextEpisode.episode_number}${dt ? ' &middot; ' + dt : ''}
+                </div>`;
+            } else if (d.lastEpisode) {
+                const dt = formatDate(d.lastEpisode.air_date);
+                seasonHtml += `<div class="upcoming-callout latest">
+                    <span class="upcoming-dot blue"></span>
+                    Latest: S${d.lastEpisode.season_number}E${d.lastEpisode.episode_number}${dt ? ' &middot; ' + dt : ''}
+                </div>`;
+            }
+        }
+
+        // Providers
+        let providersHtml = `<div class="card-providers" id="providers-${item.id}">`;
+        if (d) {
+            if (d.providers.length > 0) {
+                d.providers.forEach(p => {
+                    providersHtml += `<div class="provider-chip">
+                        <img src="${IMG_BASE}/w92${p.logo}" alt="${escHtml(p.name)}" loading="lazy">
+                        <span>${escHtml(p.name)}</span>
+                    </div>`;
+                });
+                if (d.rentBuy) providersHtml += `<span style="font-size:11px;color:var(--text-tertiary)">+ rent/buy</span>`;
+            } else if (d.rentBuy) {
+                providersHtml += `<span class="no-providers">Rent/buy only in UK</span>`;
+            } else {
+                providersHtml += `<span class="no-providers">Not streaming in UK</span>`;
+            }
+        } else {
+            providersHtml += `<div class="skeleton" style="width:180px;height:34px"></div>`;
+        }
+        providersHtml += '</div>';
+
+        return `
+            <div class="card" style="animation-delay:${delay}s" id="card-${item.id}">
+                ${accentColor ? `<div class="card-accent" style="background:${accentColor}"></div>` : ''}
+                <div class="card-inner">
+                    <div class="card-top">
+                        <div class="card-poster">
+                            ${posterSrc ? `<img src="${posterSrc}" alt="${escHtml(item.title)}" loading="lazy">` : `<div class="no-poster">&#127910;</div>`}
+                        </div>
+                        <div class="card-info">
+                            <div class="card-title" ${accentColor ? `style="color:${accentColor}"` : ''}>${escHtml(item.title)}</div>
+                            <div class="card-meta">
+                                ${item.year ? `<span>${item.year}</span><span>&middot;</span>` : ''}
+                                <span class="badge ${item.type === 'tv' ? 'badge-tv' : 'badge-film'}">${item.type === 'tv' ? 'TV Series' : 'Film'}</span>
+                                ${item.rating && item.rating !== '0.0' ? `<span>&middot;</span><span class="card-rating"><span class="star">&#9733;</span> ${item.rating}</span>` : ''}
+                            </div>
+                            ${seasonHtml}
+                        </div>
+                    </div>
+                    ${item.overview ? `<div class="card-overview">${escHtml(item.overview)}</div>` : ''}
+                    ${providersHtml}
+                    <div class="card-actions">
+                        <button class="btn ${inList ? 'btn-in-list' : 'btn-primary'}"
+                            onclick="${inList ? '' : `addToWatchlistFromSearch(${idx})`}"
+                            ${inList ? 'disabled' : ''}>
+                            ${inList ? '&#10003; In Watchlist' : '&#43; Add to Watchlist'}
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    // ─── Watchlist Tab ─────────────────────────────────────
+    function renderWatchlist() {
+        if (APP.watchlist.length === 0) {
+            return `<div class="empty-state" style="padding-top:100px">
+                <div class="empty-icon">&#9733;</div>
+                <div class="empty-title">Your watchlist is empty</div>
+                <div class="empty-desc">Search for shows and films to start building your watchlist</div>
+            </div>`;
+        }
+
+        const groups = {
+            watching: APP.watchlist.filter(w => w.status === 'watching'),
+            want_to_watch: APP.watchlist.filter(w => w.status === 'want_to_watch'),
+            watched: APP.watchlist.filter(w => w.status === 'watched'),
+        };
+
+        const labels = { watching: 'Currently Watching', want_to_watch: 'Want to Watch', watched: 'Watched' };
+
+        let html = '';
+        for (const [key, items] of Object.entries(groups)) {
+            if (items.length === 0) continue;
+            html += `<div class="watchlist-group">
+                <div class="watchlist-group-header">
+                    ${labels[key]}
+                    <span class="watchlist-group-count">${items.length}</span>
+                </div>
+                ${items.map((item, idx) => renderWatchlistCard(item, idx)).join('')}
+            </div>`;
+        }
+
+        html += '<div style="height:20px"></div>';
+        return html;
+    }
+
+    function renderWatchlistCard(item, idx) {
+        const posterSrc = item.poster ? `${IMG_BASE}/w200${item.poster}` : '';
+        const delay = idx * 0.04;
+        const provColor = getProviderColor(item.providers);
+
+        const statusLabels = {
+            want_to_watch: '&#9734; Want to Watch',
+            watching: '&#9654; Watching',
+            watched: '&#10003; Watched',
+        };
+
+        const statusClass = { want_to_watch: 'want', watching: 'watching', watched: 'watched' };
+
+        let subParts = [];
+        if (item.year) subParts.push(item.year);
+        subParts.push(item.type === 'tv' ? 'TV Series' : 'Film');
+        if (item.type === 'tv' && item.seasonInfo?.seasons) {
+            subParts.push(`${item.seasonInfo.seasons} Season${item.seasonInfo.seasons !== 1 ? 's' : ''}`);
+        }
+
+        const desc = truncateToSentences(item.overview, 2);
+
+        return `
+            <div class="wl-card" style="animation-delay:${delay}s">
+                ${provColor ? `<div class="wl-accent" style="background:${provColor}"></div>` : ''}
+                <div class="wl-inner">
+                    <div class="wl-top">
+                        <div class="wl-poster">
+                            ${posterSrc ? `<img src="${posterSrc}" alt="${escHtml(item.title)}" loading="lazy">` : `<div class="no-poster">&#127910;</div>`}
+                        </div>
+                        <div class="wl-info">
+                            <div class="wl-title" ${provColor ? `style="color:${provColor}"` : ''}>${escHtml(item.title)}</div>
+                            <div class="wl-sub">${subParts.join(' &middot; ')}</div>
+                            ${desc ? `<div class="wl-desc">${escHtml(desc)}</div>` : ''}
+                            <div class="wl-providers">
+                                ${item.providers.length > 0
+                                    ? item.providers.map(p => `<div class="provider-chip">
+                                        <img src="${IMG_BASE}/w92${p.logo}" alt="${escHtml(p.name)}" loading="lazy">
+                                        <span>${escHtml(p.name)}</span>
+                                    </div>`).join('')
+                                    : '<span style="font-size:11px;color:var(--text-tertiary)">No UK streaming</span>'
+                                }
+                            </div>
+                        </div>
+                        <div class="wl-actions">
+                            <button class="delete-btn" onclick="showDeleteConfirm(${item.id}, '${escAttr(item.title)}')" title="Remove">&#10005;</button>
+                            <button class="status-btn ${statusClass[item.status]}" onclick="cycleStatus(${item.id})">
+                                ${statusLabels[item.status]}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    // ─── Event Handlers ────────────────────────────────────
+    function handleSearchInput(value) {
+        APP.query = value;
+        const clearBtn = document.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', !!value);
+
+        clearTimeout(searchTimer);
+        if (!value.trim()) {
+            APP.results = [];
+            APP.loading = false;
+            const el = document.getElementById('results');
+            if (el) el.innerHTML = `<div class="empty-state">
+                <div class="empty-icon">&#127916;</div>
+                <div class="empty-title">Find something to watch</div>
+                <div class="empty-desc">Search for TV shows and films to see where to stream them in the UK</div>
+            </div>`;
+            return;
+        }
+
+        if (value.trim().length < 3) return;
+        searchTimer = setTimeout(() => searchContent(value), 700);
+    }
+
+    function clearSearch() {
+        APP.query = '';
+        APP.results = [];
+        render();
+        const input = document.getElementById('search-input');
+        if (input) { input.value = ''; input.focus(); }
+    }
+
+    function switchTab(tab) {
+        if (APP.tab === tab) return;
+        APP.tab = tab;
+        render();
+    }
+
+    function addToWatchlistFromSearch(idx) {
+        const item = APP.results[idx];
+        if (item) addToWatchlist(item);
+    }
+
+    // ─── Utilities ─────────────────────────────────────────
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escAttr(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch { return dateStr; }
+    }
+
+    // ─── Init ──────────────────────────────────────────────
+    render();
+    </script>
+</body>
+</html>
